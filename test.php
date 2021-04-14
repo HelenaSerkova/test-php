@@ -19,23 +19,36 @@
 // 11.	Класс должен быть задокументирован в стиле PHPDocumentor.
 
 
-
-
 final class Item {
 
   private int $id;
   private string $name;
   private int $status;
   private bool $changed;
+  private bool $isManuallySet
+  private bool $isExternallySet
 
   function __construct($idnew)
   {
     $this ->id = $idnew;
   }
 
-  private static function init($name_get, $status_get) {
-    $this->name_get = $name;
-    $this->status_get = $status;
+  /**
+  * @isManuallySet флаг для одноразового вызова
+  *
+  *
+  */
+
+
+  private function init($name_get, $status_get) {
+    if ($this->isManuallySet) {
+      throw new InvalidArgumentException('The properties are already saved')
+    }
+    if (!($this->isManuallySet)){ // при наличии этого условия, мне кажется, условие выше можно не писать
+      $this->name_get = $name;
+      $this->status_get = $status;
+      $this->isManuallySet = true;
+    }
   }
 
   public function __get($property) {
@@ -46,7 +59,10 @@ final class Item {
 
   public function __set($property, $value)
   {
-    if (property_exists($this, $property) && !(empty($value)) && $property!='changed') {
+    if (property_exists($this, $property) && !(empty($value))) {
+      if (!$property == 'name' & !$property == 'status'){
+        throw new InvalidArgumentException('invalid property');
+      }
       switch($property) {
         case 'name':
           if (is_string($value)) {
@@ -59,15 +75,19 @@ final class Item {
         default:
         break;
       }
+
       $this->$property = $value;
+      $this->isExternallySet = true;
+
     }
   }
 
   public function save($name_send, $status_send) {
-    if ($this->changed == false) {
+    if ($this->changed == false & $this->isExternallySet == true) {
       $this->name = $name_send;
       $this->status = $status_send;
       $this->changed = true;
+      $this->isExternallySet == false;
     }
   }
 }
@@ -78,9 +98,9 @@ final class Item {
 // 2.	objects: id, name, status
 // Нужно сделать выборку пользователей из базы данных с использованием конструкции JOIN у которых есть запись в таблице objects, соответствующая значению object_id
 
-$query = "SELECT * FROM users LEFT JOIN objects ON users.object_id = objects.id"
+$query = "SELECT * FROM users JOIN objects ON users.object_id = objects.id"
 
 SELECT *
 FROM users
-LEFT JOIN objects
+JOIN objects
 ON users.object_id = objects.id
